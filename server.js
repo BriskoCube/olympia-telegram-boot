@@ -25,6 +25,39 @@ bot.onText(/\/rootme/, async (msg, match) => {
     bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
+    const username = match[1];
+    const usernames = await readConfig("rootme");
+
+    let resp = "";
+
+    const result = await fetch(`https://www.root-me.org/${username}?lang=fr`);
+
+    if(result.status === 200){
+
+        if(!usernames.includes(username)) {
+            // invalidate buffer
+            writeFile("./rootme-buffer.json", {
+                timestamp: 0,
+                data: []
+            });
+
+            writeConfig("rootme", [...usernames, username]);
+
+            resp = `User '${username}' added`;
+        } else {
+            resp = `the user '${username}' is already in the list`;
+
+        }
+    } else {
+        resp = `User '${username}' not found`
+    }
+
+    const chatId = msg.chat.id;
+
+    bot.sendMessage(chatId, resp);
+});
+
 async function getRootmeBoard(){
 
     const usernames = await readConfig("rootme");
@@ -34,8 +67,6 @@ async function getRootmeBoard(){
 
         // buffer available
         if(bufferFile != null && bufferFile.timestamp + 60 * 10 * 1000 > Date.now()){
-            console.log("Buffer");
-            console.log(bufferFile.data)
             return bufferFile.data;
         }
     } catch (e) {
@@ -73,6 +104,11 @@ async function getRootmeBoard(){
 
 function readConfig(name) {
     return readFile(`${Conf.dynamic_config}/${name}.json`);
+}
+
+
+function writeConfig(name, data) {
+    return writeFile(`${Conf.dynamic_config}/${name}.json`, data);
 }
 
 function readFile(file) {
