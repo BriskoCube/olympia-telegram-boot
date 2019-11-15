@@ -8,6 +8,12 @@ const bot = new TelegramBot(Conf.api_key, {polling: true});
 
 const regex = /<li>Score.*<span>(\d+)<\/span>/;
 
+bot.onText(/\/git/, async (msg, match) => {
+    const chatId = msg.chat.id;
+
+    bot.sendMessage(chatId, "https://github.com/BriskoCube/olympia-telegram-boot");
+});
+
 bot.onText(/\/rootme/, async (msg, match) => {
 
     const chatId = msg.chat.id;
