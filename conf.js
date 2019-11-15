@@ -1,3 +1,4 @@
 module.exports = {
-    api_key: "933643653:AAFyC6tkVu6Ub2hLsuaPa-67cjDTvxi0hvU"
+    api_key: "933643653:AAFyC6tkVu6Ub2hLsuaPa-67cjDTvxi0hvU",
+    dynamic_config: "./dynamic_config"
 };
