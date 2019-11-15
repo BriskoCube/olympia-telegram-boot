@@ -1,10 +1,13 @@
 const TelegramBot = require('node-telegram-bot-api');
-
-// replace the value below with the Telegram token you receive from @BotFather
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+const Conf = require('./conf')
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(Conf.api_key, {polling: true});
+
+
+bot.setWebHook('opympia.bigcube.ch', {
+    certificate: 'cert/', // Path to your crt.pem
+});
 
 // Matches "/echo [whatever]"
 bot.onText(/\/echo (.+)/, (msg, match) => {
