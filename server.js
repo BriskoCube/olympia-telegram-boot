@@ -54,9 +54,7 @@ async function getRootmeBoard(){
         }
     }
 
-    leaderboard = leaderboard.sort((a, b) => {
-        return b.score - a.score;
-    });
+    leaderboard = leaderboard.sort((a, b) => b.score - a.score);
 
     writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
