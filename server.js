@@ -5,9 +5,9 @@ const Conf = require('./conf')
 const bot = new TelegramBot(Conf.api_key, {polling: true});
 
 
-bot.setWebHook('opympia.bigcube.ch', {
+/*bot.setWebHook('opympia.bigcube.ch', {
     certificate: 'cert/crt.pem', // Path to your crt.pem
-});
+});*/
 
 // Matches "/echo [whatever]"
 bot.onText(/\/echo (.+)/, (msg, match) => {
