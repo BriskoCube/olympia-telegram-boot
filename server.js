@@ -20,9 +20,12 @@ bot.onText(/\/rootme/, async (msg, match) => {
 
     const leaderboard = await getRootmeBoard();
 
-    const resp =  "Score: \r\n" + leaderboard.reduce((acc, user) => acc += `\t\t${user.username}: ${user.score} \r\n`, "");
+    const resp = "<b>Score:</b> \r\n" + leaderboard.reduce((acc, user, i) => {
+        const spaces = i < 9 ? "\t\t": "";
+        return acc + `\t\t\t${spaces}${i + 1}:\t\t\t<code>${user.username}</code>  <b>${user.score}</b> \r\n`;
+    }, "");
 
-    bot.sendMessage(chatId, resp);
+    bot.sendMessage(chatId, resp,{parse_mode : "HTML"});
 });
 
 bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
@@ -77,17 +80,10 @@ async function getRootmeBoard(){
     let leaderboard = [];
 
     for(let username of usernames){
-        const response = await fetch(`https://www.root-me.org/${username}?lang=fr`);
-        const html = await response.text();
-        const match = html.match(regex);
-
-        if(match != null){
-            const score = match[1];
-
-            leaderboard.push({
-                score,
-                username
-            });
+        try {
+            leaderboard.push(await getRootMeScore(username));
+        } catch (e) {
+            console.error(e)
         }
     }
 
@@ -96,10 +92,34 @@ async function getRootmeBoard(){
     writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
         data: leaderboard
-
     });
 
     return leaderboard;
+}
+
+async function getRootMeScore(username) {
+    const response = await fetch(`https://www.root-me.org/${username}?lang=fr`);
+
+    return new Promise((async (resolve) => {
+        if(response.status === 429){
+            setTimeout(async () => {
+                resolve(await getRootMeScore(username));
+            }, 500);
+        } else {
+            const html = await response.text();
+            const match = html.match(regex);
+
+            if(match != null){
+                const score = match[1];
+                console.log("resolve", {score,username})
+                resolve({score,username});
+            } else {
+                resolve({score: 0, username});
+            }
+        }
+    }));
+
+
 }
 
 function readConfig(name) {
