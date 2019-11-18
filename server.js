@@ -118,14 +118,18 @@ async function getRootmeBoard() {
 async function getRootMeScore(username) {
     let response = await fetch(`https://www.root-me.org/${username}?lang=fr`);
 
+    let timeOut = 1000;
+
     // If request rejected for too many requests. Retry after in little time out
     while (response.status === 429) {
         console.error("Request rejected (429), wait a little bit before retrying")
         response = await new Promise(resolve => {
             setTimeout(async () => {
                 resolve(await fetch(`https://www.root-me.org/${username}?lang=fr`));
-            }, 1500)
+            }, timeOut)
         });
+
+        timeOut += 500;
     }
 
     // If success return the score
