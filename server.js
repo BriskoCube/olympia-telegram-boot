@@ -20,7 +20,7 @@ bot.onText(/\/rootme/, async (msg, match) => {
 
     const leaderboard = await getRootmeBoard();
 
-    const resp =  "Score: \r\n" + leaderboard.reduce((acc, user) => acc += `\t\t${user.username}: ${user.score} \r\n`, "");
+    const resp =  "Score: \r\n" + leaderboard.reduce((acc, user) => acc += `\t\t${user.username}: ${user.score} ${user.evolution > 0 ? "+" + user.evolution: ""}\r\n`, "");
 
     bot.sendMessage(chatId, resp);
 });
@@ -62,8 +62,10 @@ async function getRootmeBoard(){
 
     const usernames = await readConfig("rootme");
 
+    let bufferFile = null;
+
     try{
-        const bufferFile = await readFile("./rootme-buffer.json");
+        bufferFile = await readFile("./rootme-buffer.json");
 
         // buffer available
         if(bufferFile != null && bufferFile.timestamp + 60 * 10 * 1000 > Date.now()){
@@ -84,9 +86,19 @@ async function getRootmeBoard(){
         if(match != null){
             const score = match[1];
 
+            let evolution = 0;
+
+            if(bufferFile != null){
+                const found = bufferFile.data.find(user => user.username === username);
+                if(found){
+                    evolution = score - found.scope
+                }
+            }
+
             leaderboard.push({
                 score,
-                username
+                username,
+                evolution,
             });
         }
     }
