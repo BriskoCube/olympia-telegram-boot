@@ -22,10 +22,14 @@ bot.onText(/\/rootme/, async (msg, match) => {
 
     const leaderboard = await getRootmeBoard();
 
+    const medals = ["🤓","🥈","🥉"];
+
     // Format the result table
     const resp = "<b>Score:</b> \r\n" + leaderboard.reduce((acc, user, i) => {
         const spaces = i < 9 ? "\t\t" : "";
-        return acc + `\t\t\t${spaces}${i + 1}:\t\t\t<code>${user.username}</code>  <b>${user.score}</b>  ${user.evolution > 0 ? "+" + user.evolution : ""}\r\n`;
+        let score = i < 3 ? medals[i] : `\t\t${i + 1}\t\t`;
+        score = i === leaderboard.length - 1 ? "\t\t🤪️" : score;
+        return acc + `${spaces}${score}:\t\t\t<code>${user.username}</code>  <b>${user.score}</b>  ${user.evolution > 0 ? "+" + user.evolution : ""}\r\n`;
     }, "");
 
     bot.sendMessage(chatId, resp, {parse_mode: "HTML"});
@@ -113,7 +117,7 @@ async function getRootmeBoard() {
 
     await writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
-        data: leaderboard
+        data: leaderboard.map(user => { return {score: user.score, username: user.username}})
 
     });
 
