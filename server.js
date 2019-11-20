@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(Conf.api_key, {polling: true});
 
-const regex = /<li>Score.*<span>(\d+)<\/span>/;
+const regex = /<span class="color1 txxl">\s+(\d+)&nbsp;Points&nbsp;\s+<span/i;
 
 let loading = false;
 
@@ -132,7 +132,7 @@ async function getRootmeBoard() {
  * @returns {Promise<{score: number, username: *}|{score: *, username: *}>}
  */
 async function getRootMeScore(username) {
-    let response = await fetch(`https://www.root-me.org/${username}?lang=fr`);
+    let response = await fetch(`https://root-me.org/${username}?inc=score&lang=fr`);
 
     let timeOut = 1000;
 
