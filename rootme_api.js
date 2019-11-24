@@ -18,11 +18,11 @@ function getHighlights(html){
 module.exports = {
     scoreRegex: /<span class="color1 txxl">\s+(\d+)&nbsp;Points&nbsp;\s+<span/i,
 
-
     /**
      * Get profile for a single user
      * @param username
-     * @returns {Promise<{score: number, username: *}|{score: *, username: *}>}
+     * @param username
+     * @returns {Promise<{score, challenges, realUsername: *, rank, username: *}|null>}
      */
     user: async function (username) {
         try {
@@ -42,7 +42,8 @@ module.exports = {
 
             return user;
         } catch (e) {
-            console.log("Exception!!!!", e)
+            console.log("Exception!!!!", e);
+            return null;
         }
     },
 

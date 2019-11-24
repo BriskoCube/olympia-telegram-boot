@@ -42,9 +42,9 @@ bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
 
     let resp = "";
 
-    const result = await fetch(`https://www.root-me.org/${username}?inc=score&lang=fr`);
+    const user = await api.user(username);
 
-    if (result.status === 200) {
+    if (user !== null) {
 
         if (!usernames.includes(username)) {
             // invalidate buffer
@@ -120,11 +120,11 @@ async function getRootmeBoard() {
 
     leaderboard = leaderboard.sort((a, b) => b.score - a.score);
 
-    /*await writeFile("./rootme-buffer.json", {
+    await writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
         data: leaderboard.map(user => { return {score: user.score, username: user.username}})
 
-    });*/
+    });
 
     loading = false;
 
