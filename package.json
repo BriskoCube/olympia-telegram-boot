@@ -19,6 +19,7 @@
   "homepage": "https://github.com/BriskoCube/olympia-telegram-boot#readme",
   "dependencies": {
     "node-fetch": "^2.6.0",
+    "node-html-parser": "^1.1.16",
     "node-telegram-bot-api": "^0.40.0"
   }
 }

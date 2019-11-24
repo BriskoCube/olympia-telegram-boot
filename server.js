@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const Conf = require('./conf');
 const fs = require("fs");
 const fetch = require("node-fetch");
+const api = require("./rootme_api");
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(Conf.api_key, {polling: true});
@@ -29,7 +30,7 @@ bot.onText(/\/rootme/, async (msg, match) => {
         const spaces = i < 9 ? "\t\t" : "";
         let score = i < 3 ? medals[i] : `\t\t${i + 1}\t\t`;
         score = i === leaderboard.length - 1 ? "\t\t🤪️" : score;
-        return acc + `${spaces}${score}:\t\t\t<code>${user.username}</code>  <b>${user.score}</b>  ${user.evolution > 0 ? "+" + user.evolution : ""}\r\n`;
+        return acc + `${spaces}${score}:\t\t\t<code>${user.realUsername || user.username}</code>  <b>${user.score}</b>  ${user.evolution > 0 ? "+" + user.evolution : ""}\r\n`;
     }, "");
 
     bot.sendMessage(chatId, resp, {parse_mode: "HTML"});
@@ -41,7 +42,7 @@ bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
 
     let resp = "";
 
-    const result = await fetch(`https://www.root-me.org/${username}?lang=fr`);
+    const result = await fetch(`https://www.root-me.org/${username}?inc=score&lang=fr`);
 
     if (result.status === 200) {
 
@@ -94,17 +95,21 @@ async function getRootmeBoard() {
     }
 
 
+
+
     loading = true;
 
     let leaderboard = [];
 
-    for (let username of usernames) {
-        try {
+    console.log(usernames)
 
-            let fetchedUser = await getRootMeScore(username);
+    for (let username of usernames) {
+        console.log(username)
+
+        try {
+            let fetchedUser = await api.user(username);
 
             let evolution = findEvolution(fetchedUser, bufferFile);
-
 
             leaderboard.push({...fetchedUser, evolution});
 
@@ -115,55 +120,15 @@ async function getRootmeBoard() {
 
     leaderboard = leaderboard.sort((a, b) => b.score - a.score);
 
-    await writeFile("./rootme-buffer.json", {
+    /*await writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
         data: leaderboard.map(user => { return {score: user.score, username: user.username}})
 
-    });
+    });*/
 
     loading = false;
 
     return leaderboard;
-}
-
-/**
- * Get score for a single user
- * @param username
- * @returns {Promise<{score: number, username: *}|{score: *, username: *}>}
- */
-async function getRootMeScore(username) {
-    let response = await fetch(`https://root-me.org/${username}?inc=score&lang=fr`);
-
-    let timeOut = 1000;
-
-    // If request rejected for too many requests. Retry after in little time out
-    while (response.status === 429) {
-        console.error("Request rejected (429), wait a little bit before retrying")
-        response = await new Promise(resolve => {
-            setTimeout(async () => {
-                resolve(await fetch(`https://www.root-me.org/${username}?lang=fr`));
-            }, timeOut)
-        });
-
-        timeOut += 500;
-    }
-
-    // If success return the score
-    if (response.status === 200) {
-        const html = await response.text();
-        const match = html.match(regex);
-
-        // If a score is found return it, else 0
-        if (match != null) {
-            const score = match[1];
-            console.log("resolve", {score, username})
-            return {score, username};
-        } else {
-            return {score: 0, username};
-        }
-    } else {
-        console.error("Error:", response.status)
-    }
 }
 
 /**
