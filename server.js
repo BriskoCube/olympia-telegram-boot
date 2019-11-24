@@ -122,8 +122,7 @@ async function getRootmeBoard() {
 
     await writeFile("./rootme-buffer.json", {
         timestamp: Date.now(),
-        data: leaderboard.map(user => { return {score: user.score, username: user.username}})
-
+        data: leaderboard.map(user => { return {...user}})
     });
 
     loading = false;
