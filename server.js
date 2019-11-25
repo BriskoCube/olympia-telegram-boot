@@ -40,56 +40,26 @@ bot.onText(/\/rootme/, async (msg, match) => {
 
 bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
     const username = match[1];
-    const usernames = await readConfig("rootme");
-
-    let resp = "adds";
 
     const results = await api.search(username);
 
-    console.log(msg.chat.id)
+    if(results.length === 1){
+        bot.sendMessage(msg.chat.id, await addUser(results[0]));
+    } else if(results.length > 1){
+        keyboardResponses[msg.chat.id] = results;
 
-    console.log(msg.chat);
-
-    keyboardResponses[msg.chat.id] = results;
-
-    bot.sendMessage(msg.chat.id, "Choissez un pseudo", {
-        "reply_markup": {
-            "keyboard": results.map(result => [result.realUsername]),
-            "resize_keyboard": true,
-            "one_time_keyboard": true,
-            "selective" : true
-        },
-        "reply_to_message_id": msg.message_id,
-    });
-
-
-    //const user = await api.user(username);
-
-
-
-    /*if (user !== null) {
-
-        if (!usernames.includes(username)) {
-            // invalidate buffer
-            writeFile("./rootme-buffer.json", {
-                timestamp: 0,
-                data: []
-            });
-
-            writeConfig("rootme", [...usernames, username]);
-
-            resp = `User '${username}' added`;
-        } else {
-            resp = `the user '${username}' is already in the list`;
-
-        }
+        bot.sendMessage(msg.chat.id, "Choose a user", {
+            "reply_markup": {
+                "keyboard": results.map(result => [result.realUsername]),
+                "resize_keyboard": true,
+                "one_time_keyboard": true,
+                "selective" : true
+            },
+            "reply_to_message_id": msg.message_id,
+        });
     } else {
-        resp = `User '${username}' not found`
-    }*/
-
-    //const chatId = msg.chat.id;
-
-    //bot.sendMessage(chatId, resp);
+        bot.sendMessage(msg.chat.id, `User '${username}' not found`);
+    }
 });
 
 bot.onText(/(.+)/, async (msg, match) => {
@@ -102,34 +72,36 @@ bot.onText(/(.+)/, async (msg, match) => {
     if(keyboardResponses[chatId] && keyboardResponses[chatId].some(user => user.realUsername === realUsername)){
         const user = keyboardResponses[chatId].find(user => user.realUsername === realUsername);
 
-        let resp = "Something went wrong";
-
-        if (user !== undefined) {
-            const usernames = await readConfig("rootme");
-
-            if (!usernames.includes(realUsername)) {
-                // invalidate buffer
-                writeFile("./rootme-buffer.json", {
-                    timestamp: 0,
-                    data: []
-                });
-
-                writeConfig("rootme", [...usernames, user.username]);
-
-                resp = `User '${realUsername}' added`;
-            } else {
-                resp = `the user '${realUsername}' is already in the list`;
-
-            }
-        } else {
-            resp = `User '${realUsername}' not found`
-        }
-
-        bot.sendMessage(chatId, resp);
+        bot.sendMessage(chatId, await addUser(user));
     }
 
     delete keyboardResponses[chatId];
 });
+
+async function addUser(user){
+    if (user !== undefined) {
+        const usernames = await readConfig("rootme");
+
+        if (!usernames.includes(user.username)) {
+            // invalidate buffer
+            writeFile("./rootme-buffer.json", {
+                timestamp: 0,
+                data: []
+            });
+
+            writeConfig("rootme", [...usernames, user.username]);
+
+            resp = `User '${user.realUsername}' added`;
+        } else {
+            resp = `the user '${user.realUsername}' is already in the list`;
+
+        }
+    } else {
+        resp = `User not found`
+    }
+
+    return resp;
+}
 
 /**
  * Get all user's scores
