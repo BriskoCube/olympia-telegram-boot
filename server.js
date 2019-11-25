@@ -9,6 +9,8 @@ const bot = new TelegramBot(Conf.api_key, {polling: true});
 
 const regex = /<span class="color1 txxl">\s+(\d+)&nbsp;Points&nbsp;\s+<span/i;
 
+const keyboardResponses = {};
+
 let loading = false;
 
 bot.onText(/\/git/, async (msg, match) => {
@@ -40,11 +42,32 @@ bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
     const username = match[1];
     const usernames = await readConfig("rootme");
 
-    let resp = "";
+    let resp = "adds";
 
-    const user = await api.user(username);
+    const results = await api.search(username);
 
-    if (user !== null) {
+    console.log(msg.chat.id)
+
+    console.log(msg.chat);
+
+    keyboardResponses[msg.chat.id] = results;
+
+    bot.sendMessage(msg.chat.id, "Choissez un pseudo", {
+        "reply_markup": {
+            "keyboard": results.map(result => [result.realUsername]),
+            "resize_keyboard": true,
+            "one_time_keyboard": true,
+            "selective" : true
+        },
+        "reply_to_message_id": msg.message_id,
+    });
+
+
+    //const user = await api.user(username);
+
+
+
+    /*if (user !== null) {
 
         if (!usernames.includes(username)) {
             // invalidate buffer
@@ -62,11 +85,50 @@ bot.onText(/\/add_rootme (.+)/, async (msg, match) => {
         }
     } else {
         resp = `User '${username}' not found`
-    }
+    }*/
+
+    //const chatId = msg.chat.id;
+
+    //bot.sendMessage(chatId, resp);
+});
+
+bot.onText(/(.+)/, async (msg, match) => {
+    const realUsername = match[0];
+
 
     const chatId = msg.chat.id;
+    console.log(keyboardResponses[chatId]);
 
-    bot.sendMessage(chatId, resp);
+    if(keyboardResponses[chatId] && keyboardResponses[chatId].some(user => user.realUsername === realUsername)){
+        const user = keyboardResponses[chatId].find(user => user.realUsername === realUsername);
+
+        let resp = "Something went wrong";
+
+        if (user !== undefined) {
+            const usernames = await readConfig("rootme");
+
+            if (!usernames.includes(realUsername)) {
+                // invalidate buffer
+                writeFile("./rootme-buffer.json", {
+                    timestamp: 0,
+                    data: []
+                });
+
+                writeConfig("rootme", [...usernames, user.username]);
+
+                resp = `User '${realUsername}' added`;
+            } else {
+                resp = `the user '${realUsername}' is already in the list`;
+
+            }
+        } else {
+            resp = `User '${realUsername}' not found`
+        }
+
+        bot.sendMessage(chatId, resp);
+    }
+
+    delete keyboardResponses[chatId];
 });
 
 /**
@@ -93,15 +155,10 @@ async function getRootmeBoard() {
     } catch (e) {
         console.log("Buffer not found")
     }
-
-
-
-
+    
     loading = true;
 
     let leaderboard = [];
-
-    console.log(usernames)
 
     for (let username of usernames) {
         console.log(username)

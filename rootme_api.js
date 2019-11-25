@@ -16,8 +16,6 @@ function getHighlights(html){
 }
 
 module.exports = {
-    scoreRegex: /<span class="color1 txxl">\s+(\d+)&nbsp;Points&nbsp;\s+<span/i,
-
     /**
      * Get profile for a single user
      * @param username
@@ -45,6 +43,31 @@ module.exports = {
             console.log("Exception!!!!", e);
             return null;
         }
+    },
+
+    search: async function(query){
+        const url = `https://www.root-me.org/?page=recherche&lang=fr&recherche=${encodeURI(query)}`;
+        const usernameRegex = /^\/(?<username>.+)\?/;
+
+        try {
+
+            const response = await  this.safeFetch(url);
+            const html = parser.parse(await response.text());
+
+            const results = html.querySelectorAll(".t-body.tb-padding ul li a.forum");
+
+            return results.map(result => {
+                return {
+                    realUsername: result.childNodes[0].rawText,
+                    username: result.attributes.href.match(usernameRegex).groups.username
+                };
+            });
+
+        } catch (e) {
+            console.log("Exception!!!!", e);
+            return [];
+        }
+
     },
 
 
